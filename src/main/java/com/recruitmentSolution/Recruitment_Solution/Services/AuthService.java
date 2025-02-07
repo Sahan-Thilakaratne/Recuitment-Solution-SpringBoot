@@ -29,16 +29,19 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public boolean authenticateUser(String email, String rawPassword){
+    public Optional<User> authenticateUser(String email, String rawPassword){
 
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if(userOptional.isPresent()){
             User user = userOptional.get();
 
-            return passwordEncoder.matches(rawPassword, user.getPassword());
+            if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+                // Return the authenticated user
+                return Optional.of(user);
+            }
         }
 
-        return false;
+        return Optional.empty();
     }
 }

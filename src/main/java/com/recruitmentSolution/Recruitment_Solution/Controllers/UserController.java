@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -45,11 +48,19 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest){
 
-        boolean isAuthenticated = authService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
+        Optional<User> userOptional = authService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
 
-        if (isAuthenticated){
-            return ResponseEntity.ok("Login Successful");
-        }else{
+        if (userOptional.isPresent()){
+            User user = userOptional.get();
+
+            // Create a response map with the message and user details
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("message", "Login Successful");
+            responseBody.put("fullname", user.getName()); // Assuming User has a getFullName() method
+            responseBody.put("email", user.getEmail());
+
+            return ResponseEntity.ok(responseBody);
+        } else {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
     }
