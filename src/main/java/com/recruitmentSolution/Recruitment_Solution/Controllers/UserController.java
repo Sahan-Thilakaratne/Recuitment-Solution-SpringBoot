@@ -65,4 +65,23 @@ public class UserController {
         }
     }
 
+    @PostMapping("/getUserDetails")
+    public ResponseEntity<?> getUserDetails(String email){
+
+        Optional<User> userOptional = authService.getUserDetails(email);
+
+        if(userOptional.isPresent()){
+            User user = userOptional.get();
+    System.out.println("User::::"+ user);
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("fullname", user.getName());
+            System.out.println("Fullname::::"+ user.getName());
+            responseBody.put("email", user.getEmail());
+
+            return ResponseEntity.ok(responseBody);
+        } else {
+            return  ResponseEntity.status(401).body("Invalid email");
+        }
+    }
+
 }
