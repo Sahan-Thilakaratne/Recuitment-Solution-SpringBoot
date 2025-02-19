@@ -50,6 +50,7 @@ public class AuthService {
         Optional<User> user = userRepository.findByEmail(email);
 
         if(user.isPresent()){
+
             User u = user.get();
 
             return Optional.of(u);

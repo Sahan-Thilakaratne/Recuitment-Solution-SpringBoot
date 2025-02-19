@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:9090")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -66,17 +67,19 @@ public class UserController {
     }
 
     @PostMapping("/getUserDetails")
-    public ResponseEntity<?> getUserDetails(String email){
+    public ResponseEntity<?> getUserDetails(@RequestBody User user){
 
-        Optional<User> userOptional = authService.getUserDetails(email);
+        System.out.println("Incoming user data: "+ user.getEmail());
+
+        Optional<User> userOptional = authService.getUserDetails(user.getEmail());
 
         if(userOptional.isPresent()){
-            User user = userOptional.get();
-    System.out.println("User::::"+ user);
+            User user1 = userOptional.get();
+
             Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("fullname", user.getName());
-            System.out.println("Fullname::::"+ user.getName());
-            responseBody.put("email", user.getEmail());
+            responseBody.put("fullname", user1.getName());
+
+            responseBody.put("email", user1.getEmail());
 
             return ResponseEntity.ok(responseBody);
         } else {
