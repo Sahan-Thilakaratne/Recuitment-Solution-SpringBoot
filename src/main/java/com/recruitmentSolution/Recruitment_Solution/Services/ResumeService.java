@@ -2,6 +2,7 @@ package com.recruitmentSolution.Recruitment_Solution.Services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recruitmentSolution.Recruitment_Solution.Config;
 import com.recruitmentSolution.Recruitment_Solution.Models.ResumeData;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -26,7 +27,11 @@ public class ResumeService {
 
     private RestTemplate restTemplate = new RestTemplate();
 
+
+
     public Object processResume(MultipartFile file) throws Exception{
+
+        openaiApiKey = Config.getOpenApiKey();
         // Save the uploaded file to a temporary file.
         File tempFile = File.createTempFile("resume", ".pdf");
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
