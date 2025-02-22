@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class ResumeService {
 
-    @Value("${openai.api.key}")
+    //@Value("${openai.api.key}")
     private String openaiApiKey;
 
     private RestTemplate restTemplate = new RestTemplate();
