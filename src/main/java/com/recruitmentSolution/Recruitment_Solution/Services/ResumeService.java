@@ -2,6 +2,7 @@ package com.recruitmentSolution.Recruitment_Solution.Services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recruitmentSolution.Recruitment_Solution.Models.ResumeData;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,13 +37,35 @@ public class ResumeService {
         String extractedText = extractTextFromPDF(tempFile);
         tempFile.delete();  // Delete temp file
 
+        System.out.println("Calling open APIs");
+
         // Call ChatGPT (OpenAI) API to parse the resume.
         String structuredResponse = callOpenAiApi(extractedText);
 
+        String finalResponse = callOpenApiForBreakdownString(structuredResponse);
+
         // Convert the JSON response into a Java object.
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(structuredResponse);
-        return jsonNode;
+        JsonNode jsonNode = mapper.readTree(finalResponse);
+        System.out.println("Final output from open api: "+finalResponse);
+        // Extract the assistant's message content.
+        String content = jsonNode.path("choices")
+                .get(0)
+                .path("message")
+                .path("content")
+                .asText();
+
+        // Clean the markdown formatting (remove ```json and ```)
+        String cleanedContent = content.replace("```json", "")
+                .replace("```", "")
+                .trim();
+
+        System.out.println("Clened content: "+cleanedContent);
+
+        // Parse the cleaned JSON into our ResumeData object.
+        ResumeData resumeData = mapper.readValue(cleanedContent, ResumeData.class);
+        return cleanedContent;
+
     }
 
     private String extractTextFromPDF(File pdfFile) throws Exception {
@@ -63,7 +86,8 @@ public class ResumeService {
 
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", "user");
-        userMessage.put("content", "Extract structured data from the following resume text:\n" + resumeText);
+        userMessage.put("content", "Extract structured data from the following resume text and output in the JSON format described above:\n" + resumeText);
+
 
         // Assemble the API request body.
         Map<String, Object> requestBody = new HashMap<>();
@@ -86,6 +110,38 @@ public class ResumeService {
         }else {
             throw new Exception("Error calling openai api: "+ response.getStatusCode());
         }
+    }
+
+    private String callOpenApiForBreakdownString(String resumeJson) throws Exception{
+
+        String url = "https://api.openai.com/v1/chat/completions";
+
+
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", "Extract structured data (only the necessary data that should needed from resume ex: personal info, experiences, education, skills, projects etc.) from the following data text and output in the JSON format that can easily read and extract from a javascript frontend to render:\n"+ resumeJson);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-4o");
+        requestBody.put("messages", new Object[]{ userMessage});
+        requestBody.put("temperature", 0);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(openaiApiKey);
+
+        HttpEntity<Map<String, Object>> request  = new HttpEntity<>(requestBody, headers);
+
+        //Make post request
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+
+        if(response.getStatusCode() == HttpStatus.OK){
+            return response.getBody();
+        }else {
+            throw new Exception("Error calling openai api: "+ response.getStatusCode());
+        }
+
+
     }
 
 
